@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ConsultantType {
+  CAREER_GUIDANCE
+  COLLEGE_COURSE
+  EXAM_PREPARATION
+  STUDY_ABROAD
+  SKILL_MENTORSHIP
+  JOB_PLACEMENT
+  GOVERNMENT_JOBS
+  PERSONAL_GROWTH
+  ALTERNATIVE_CAREERS
+}
+
+enum BookingStatus {
+  PENDING       // created but payment not confirmed
+  PROCESSING    // admin is processing the booking
+  SUCCESS       // payment captured & booking paid
+  FAILED        // payment failed
+  COMPLETED     // counselling/consultant delivered & marked complete
+}
+
+model Student {
+  id          Int       @id @default(autoincrement())
+  name        String
+  email       String    @unique
+  phone       String
+  password    String
+  bookings    Booking[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Admin {
+  id          Int       @id @default(autoincrement())
+  name        String?
+  email       String    @unique
+  password    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Booking {
+  id               Int             @id @default(autoincrement())
+  student          Student         @relation(fields: [studentId], references: [id])
+  studentId        Int
+  consultantType   ConsultantType
+  details          String
+  amount           Int             // amount in paise (e.g., ₹500 = 50000)
+  currency         String          @default("INR")
+  status           BookingStatus   @default(PENDING)
+  razorpayOrderId  String?         // store razorpay order id once created
+  payment          Payment?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model Payment {
+  id                 Int       @id @default(autoincrement())
+  booking            Booking   @relation(fields: [bookingId], references: [id])
+  bookingId          Int       @unique
+  razorpayPaymentId  String
+  razorpayOrderId    String
+  razorpaySignature  String
+  amount             Int
+  currency           String    @default("INR")
+  status             BookingStatus
+  createdAt          DateTime  @default(now())
+}
