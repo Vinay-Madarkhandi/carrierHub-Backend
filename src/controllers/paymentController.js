@@ -60,6 +60,14 @@ export const verifyPayment = async (req, res, next) => {
     const { razorpay_payment_id, razorpay_order_id, razorpay_signature, bookingId } = req.body;
     const studentId = req.student.id;
 
+    console.log('Payment verification request:', {
+      bookingId,
+      studentId,
+      razorpay_order_id,
+      razorpay_payment_id: razorpay_payment_id ? 'present' : 'missing',
+      razorpay_signature: razorpay_signature ? 'present' : 'missing'
+    });
+
     // Find booking and verify ownership
     const booking = await prisma.booking.findFirst({
       where: {
@@ -69,6 +77,7 @@ export const verifyPayment = async (req, res, next) => {
     });
 
     if (!booking) {
+      console.error('Booking not found:', { bookingId, studentId });
       return res.status(404).json({
         success: false,
         message: 'Booking not found',
@@ -76,10 +85,30 @@ export const verifyPayment = async (req, res, next) => {
       });
     }
 
+    // Check if payment already exists (prevent duplicate processing)
+    const existingPayment = await prisma.payment.findFirst({
+      where: { razorpayPaymentId: razorpay_payment_id }
+    });
+
+    if (existingPayment) {
+      console.log('Payment already processed:', razorpay_payment_id);
+      return res.json({
+        success: true,
+        message: 'Payment already verified',
+        data: { payment: existingPayment }
+      });
+    }
+
     // Verify payment signature
     const isSignatureValid = verifyPaymentSignature(razorpay_order_id, razorpay_payment_id, razorpay_signature);
 
     if (!isSignatureValid) {
+      console.error('Payment signature verification failed:', {
+        razorpay_order_id,
+        razorpay_payment_id,
+        bookingId
+      });
+
       // Mark booking as failed
       await prisma.booking.update({
         where: { id: booking.id },
@@ -112,12 +141,19 @@ export const verifyPayment = async (req, res, next) => {
       data: { status: 'SUCCESS' }
     });
 
+    console.log('Payment verified successfully:', {
+      paymentId: payment.id,
+      bookingId: booking.id,
+      amount: booking.amount
+    });
+
     res.json({
       success: true,
       message: 'Payment verified successfully',
       data: { payment }
     });
   } catch (error) {
+    console.error('Payment verification error:', error);
     next(error);
   }
 };
@@ -125,12 +161,19 @@ export const verifyPayment = async (req, res, next) => {
 export const handleWebhook = async (req, res, next) => {
   try {
     const signature = req.headers['x-razorpay-signature'];
-    const body = JSON.stringify(req.body);
+    const body = req.rawBody; // Use raw body for signature verification
+
+    console.log('Webhook received:', {
+      event: req.body?.event,
+      signature: signature ? 'present' : 'missing',
+      bodyLength: body ? body.length : 0
+    });
 
     // Verify webhook signature
     const isSignatureValid = verifyWebhookSignature(body, signature);
 
     if (!isSignatureValid) {
+      console.error('Webhook signature validation failed');
       return res.status(400).json({
         success: false,
         message: 'Invalid webhook signature',
@@ -140,6 +183,8 @@ export const handleWebhook = async (req, res, next) => {
 
     const { event, payload } = req.body;
 
+    console.log(`Processing webhook event: ${event}`);
+
     // Handle different webhook events
     switch (event) {
       case 'payment.captured':
@@ -147,6 +192,9 @@ export const handleWebhook = async (req, res, next) => {
         break;
       case 'payment.failed':
         await handlePaymentFailed(payload.payment.entity);
+        break;
+      case 'payment.authorized':
+        console.log('Payment authorized event received');
         break;
       default:
         console.log(`Unhandled webhook event: ${event}`);

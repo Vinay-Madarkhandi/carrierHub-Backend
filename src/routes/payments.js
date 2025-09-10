@@ -5,8 +5,27 @@ import { createPaymentOrder, verifyPayment, handleWebhook } from '../controllers
 
 const router = express.Router();
 
+// Middleware to capture raw body for webhook signature verification
+const captureRawBody = (req, res, next) => {
+  let data = '';
+  req.setEncoding('utf8');
+  req.on('data', chunk => {
+    data += chunk;
+  });
+  req.on('end', () => {
+    req.rawBody = data;
+    try {
+      req.body = JSON.parse(data);
+    } catch (error) {
+      console.error('Error parsing webhook JSON:', error);
+      return res.status(400).json({ error: 'Invalid JSON' });
+    }
+    next();
+  });
+};
+
 // Webhook endpoint (no authentication required)
-router.post('/webhook', express.raw({ type: 'application/json' }), handleWebhook);
+router.post('/webhook', captureRawBody, handleWebhook);
 
 // Student payment routes (require authentication)
 router.use(authenticateStudent);

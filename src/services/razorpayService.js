@@ -42,12 +42,31 @@ export const verifyPayment = (razorpay_order_id, razorpay_payment_id, razorpay_s
 
 export const verifyWebhookSignature = (body, signature) => {
   try {
+    if (!process.env.RAZORPAY_WEBHOOK_SECRET) {
+      console.error('RAZORPAY_WEBHOOK_SECRET is not configured');
+      return false;
+    }
+
+    if (!signature) {
+      console.error('No signature provided for webhook verification');
+      return false;
+    }
+
     const expectedSignature = crypto
       .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
       .update(body)
       .digest('hex');
 
-    return expectedSignature === signature;
+    const isValid = expectedSignature === signature;
+    
+    if (!isValid) {
+      console.error('Webhook signature mismatch:', {
+        expected: expectedSignature,
+        received: signature
+      });
+    }
+
+    return isValid;
   } catch (error) {
     console.error('Webhook signature verification error:', error);
     return false;

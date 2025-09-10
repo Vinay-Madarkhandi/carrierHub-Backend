@@ -27,6 +27,13 @@ enum BookingStatus {
   COMPLETED     // counselling/consultant delivered & marked complete
 }
 
+enum PaymentStatus {
+  SUCCESS       // payment successful
+  FAILED        // payment failed
+  PENDING       // payment pending
+  REFUNDED      // payment refunded
+}
+
 model Student {
   id          Int       @id @default(autoincrement())
   name        String
@@ -63,14 +70,14 @@ model Booking {
 }
 
 model Payment {
-  id                 Int       @id @default(autoincrement())
-  booking            Booking   @relation(fields: [bookingId], references: [id])
-  bookingId          Int       @unique
-  razorpayPaymentId  String
+  id                 Int           @id @default(autoincrement())
+  booking            Booking       @relation(fields: [bookingId], references: [id])
+  bookingId          Int           @unique
+  razorpayPaymentId  String        @unique
   razorpayOrderId    String
   razorpaySignature  String
   amount             Int
-  currency           String    @default("INR")
-  status             BookingStatus
-  createdAt          DateTime  @default(now())
+  currency           String        @default("INR")
+  status             PaymentStatus
+  createdAt          DateTime      @default(now())
 }
