@@ -77,6 +77,7 @@ app.get('/api/docs', (req, res) => {
         'GET /api/bookings/:id': 'Get specific booking'
       },
       payments: {
+        'GET /api/payments/key': 'Get Razorpay key ID (public)',
         'POST /api/payments/create': 'Create Razorpay order',
         'POST /api/payments/verify': 'Verify payment',
         'POST /api/payments/webhook': 'Razorpay webhook'

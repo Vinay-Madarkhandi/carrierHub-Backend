@@ -27,6 +27,16 @@ const captureRawBody = (req, res, next) => {
 // Webhook endpoint (no authentication required)
 router.post('/webhook', captureRawBody, handleWebhook);
 
+// Public endpoint to get Razorpay key ID (no authentication required)
+router.get('/key', (req, res) => {
+  res.json({
+    success: true,
+    data: {
+      keyId: process.env.RAZORPAY_KEY_ID
+    }
+  });
+});
+
 // Student payment routes (require authentication)
 router.use(authenticateStudent);
 

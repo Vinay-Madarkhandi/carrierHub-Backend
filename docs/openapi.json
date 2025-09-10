@@ -502,6 +502,38 @@
         }
       }
     },
+    "/payments/key": {
+      "get": {
+        "tags": ["Payments"],
+        "summary": "Get Razorpay key ID for frontend initialization",
+        "description": "Public endpoint to retrieve Razorpay key ID without authentication",
+        "responses": {
+          "200": {
+            "description": "Razorpay key ID retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessResponse" },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "keyId": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/payments/create": {
       "post": {
         "tags": ["Payments"],
