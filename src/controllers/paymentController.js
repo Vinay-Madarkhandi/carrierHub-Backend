@@ -222,16 +222,53 @@ export const verifyPayment = async (req, res, next) => {
     // Use completely isolated variable to avoid any contamination
     const transactionStatus = "COMPLETED"; // Explicit TransactionStatus enum value
 
-    const payment = await prisma.payment.create({
-      data: {
-        bookingId: booking.id,
-        razorpayPaymentId: razorpay_payment_id,
-        razorpayOrderId: razorpay_order_id,
-        razorpaySignature: razorpay_signature,
-        amount: booking.amount,
-        currency: booking.currency,
-        status: transactionStatus, // Use isolated variable
-      },
+    // Debug: Log everything before payment creation
+    console.log("=== PAYMENT CREATION DEBUG ===");
+    console.log("transactionStatus variable:", transactionStatus);
+    console.log("typeof transactionStatus:", typeof transactionStatus);
+    console.log("booking object keys:", Object.keys(booking));
+    console.log("booking.status:", booking.status);
+    console.log("typeof booking.status:", typeof booking.status);
+    console.log("Exact data being passed to prisma.payment.create:", {
+      bookingId: Number(booking.id),
+      razorpayPaymentId: String(razorpay_payment_id),
+      razorpayOrderId: String(razorpay_order_id),
+      razorpaySignature: String(razorpay_signature),
+      amount: Number(booking.amount),
+      currency: String(booking.currency),
+      status: "COMPLETED",
+    });
+    console.log("=== END PAYMENT CREATION DEBUG ===");
+
+    // Use raw SQL to bypass any Prisma enum type checking issues
+    console.log("=== ATTEMPTING RAW SQL PAYMENT CREATION ===");
+    
+    const payment = await prisma.$executeRaw`
+      INSERT INTO "Payment" (
+        "bookingId", 
+        "razorpayPaymentId", 
+        "razorpayOrderId", 
+        "razorpaySignature", 
+        "amount", 
+        "currency", 
+        "status", 
+        "createdAt"
+      ) VALUES (
+        ${Number(booking.id)},
+        ${String(razorpay_payment_id)},
+        ${String(razorpay_order_id)},
+        ${String(razorpay_signature)},
+        ${Number(booking.amount)},
+        ${String(booking.currency)},
+        ${'COMPLETED'}::"TransactionStatus",
+        ${new Date()}
+      )
+      RETURNING *
+    `;
+    
+    // Fetch the created payment for response
+    const createdPayment = await prisma.payment.findFirst({
+      where: { razorpayPaymentId: razorpay_payment_id },
     });
 
     // Update booking status using string values (reliable approach)
@@ -247,7 +284,7 @@ export const verifyPayment = async (req, res, next) => {
     });
 
     console.log("Payment verified successfully:", {
-      paymentId: payment.id,
+      paymentId: createdPayment?.id,
       bookingId: booking.id,
       amount: booking.amount,
     });
@@ -255,7 +292,7 @@ export const verifyPayment = async (req, res, next) => {
     res.json({
       success: true,
       message: "Payment verified successfully",
-      data: { payment },
+      data: { payment: createdPayment },
     });
   } catch (error) {
     console.error("Payment verification error:", error);
