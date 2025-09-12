@@ -227,7 +227,7 @@ export const verifyPayment = async (req, res, next) => {
         razorpaySignature: razorpay_signature,
         amount: booking.amount,
         currency: booking.currency,
-        status: Prisma.TransactionStatus.COMPLETED, // Use explicit Prisma enum
+        status: "COMPLETED", // Use string value - always works
       },
     });
 
@@ -399,7 +399,7 @@ const handlePaymentCaptured = async (paymentEntity) => {
         razorpaySignature: "", // Not available in webhook
         amount: amount,
         currency: currency,
-        status: Prisma.TransactionStatus.COMPLETED, // Use explicit Prisma enum
+        status: "COMPLETED", // Use string value - always works
       },
     });
 
