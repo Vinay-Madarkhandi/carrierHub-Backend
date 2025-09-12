@@ -1,4 +1,5 @@
 import prisma from "../prismaClient.js";
+import { PaymentStatus, BookingStatus } from "@prisma/client";
 import {
   createOrder,
   verifyPayment as verifyPaymentSignature,
@@ -184,7 +185,7 @@ export const verifyPayment = async (req, res, next) => {
       // Mark booking as failed
       await prisma.booking.update({
         where: { id: booking.id },
-        data: { status: "FAILED" },
+        data: { status: BookingStatus.FAILED },
       });
 
       return res.status(400).json({
@@ -203,14 +204,14 @@ export const verifyPayment = async (req, res, next) => {
         razorpaySignature: razorpay_signature,
         amount: booking.amount,
         currency: booking.currency,
-        status: "SUCCESS",
+        status: PaymentStatus.SUCCESS,
       },
     });
 
     // Update booking status
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { status: "SUCCESS" },
+      data: { status: BookingStatus.SUCCESS },
     });
 
     console.log("Payment verified successfully:", {
@@ -369,14 +370,14 @@ const handlePaymentCaptured = async (paymentEntity) => {
         razorpaySignature: "", // Not available in webhook
         amount: amount,
         currency: currency,
-        status: "SUCCESS",
+        status: PaymentStatus.SUCCESS,
       },
     });
 
     // Update booking status
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { status: "SUCCESS" },
+      data: { status: BookingStatus.SUCCESS },
     });
 
     console.log(`Payment captured successfully for booking ${booking.id}`);
@@ -413,7 +414,7 @@ const handlePaymentFailed = async (paymentEntity) => {
     // Update booking status to failed (idempotent operation)
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { status: "FAILED" },
+      data: { status: BookingStatus.FAILED },
     });
 
     console.log(`Payment failed for booking ${booking.id}`);
@@ -499,7 +500,7 @@ const handleRefundProcessed = async (refundEntity) => {
     // Update booking status to failed
     await prisma.booking.update({
       where: { id: payment.bookingId },
-      data: { status: "FAILED" },
+      data: { status: BookingStatus.FAILED },
     });
 
     console.log(
