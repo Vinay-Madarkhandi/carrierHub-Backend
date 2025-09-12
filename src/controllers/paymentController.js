@@ -1,7 +1,6 @@
 import crypto from "crypto";
 import prisma from "../prismaClient.js";
-import pkg from "@prisma/client";
-const { PaymentStatus, BookingStatus } = pkg;
+import { Prisma } from "@prisma/client";
 import {
   createOrder,
   verifyPayment as verifyPaymentSignature,
@@ -188,7 +187,7 @@ export const verifyPayment = async (req, res, next) => {
       // Mark booking as failed with explicit Prisma enum
       await prisma.booking.update({
         where: { id: booking.id },
-        data: { status: BookingStatus.FAILED }, // Use imported Prisma enum
+        data: { status: Prisma.BookingStatus.FAILED }, // Use Prisma namespace enum
       });
 
       return res.status(400).json({
@@ -207,14 +206,14 @@ export const verifyPayment = async (req, res, next) => {
         razorpaySignature: razorpay_signature,
         amount: booking.amount,
         currency: booking.currency,
-        status: PaymentStatus.SUCCESS, // Use imported Prisma enum
+        status: Prisma.PaymentStatus.SUCCESS, // Use Prisma namespace enum
       },
     });
 
     // Update booking status with explicit Prisma enum
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { status: BookingStatus.SUCCESS }, // Use imported Prisma enum
+      data: { status: Prisma.BookingStatus.SUCCESS }, // Use Prisma namespace enum
     });
 
     console.log("Payment verified successfully:", {
@@ -373,14 +372,14 @@ const handlePaymentCaptured = async (paymentEntity) => {
         razorpaySignature: "", // Not available in webhook
         amount: amount,
         currency: currency,
-        status: PaymentStatus.SUCCESS, // Use imported Prisma enum
+        status: Prisma.PaymentStatus.SUCCESS, // Use Prisma namespace enum
       },
     });
 
     // Update booking status with explicit Prisma enum
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { status: BookingStatus.SUCCESS }, // Use imported Prisma enum
+      data: { status: Prisma.BookingStatus.SUCCESS }, // Use Prisma namespace enum
     });
 
     console.log(`Payment captured successfully for booking ${booking.id}`);
@@ -417,7 +416,7 @@ const handlePaymentFailed = async (paymentEntity) => {
     // Update booking status to failed (idempotent operation)
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { status: BookingStatus.FAILED }, // Use imported Prisma enum
+      data: { status: Prisma.BookingStatus.FAILED }, // Use Prisma namespace enum
     });
 
     console.log(`Payment failed for booking ${booking.id}`);
@@ -503,7 +502,7 @@ const handleRefundProcessed = async (refundEntity) => {
     // Update booking status to failed
     await prisma.booking.update({
       where: { id: payment.bookingId },
-      data: { status: BookingStatus.FAILED }, // Use imported Prisma enum
+      data: { status: Prisma.BookingStatus.FAILED }, // Use Prisma namespace enum
     });
 
     console.log(
