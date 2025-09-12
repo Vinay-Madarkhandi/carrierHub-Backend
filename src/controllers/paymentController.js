@@ -227,7 +227,7 @@ export const verifyPayment = async (req, res, next) => {
         razorpaySignature: razorpay_signature,
         amount: booking.amount,
         currency: booking.currency,
-        status: "COMPLETED", // Using new TransactionStatus enum - no conflicts!
+        status: Prisma.TransactionStatus.COMPLETED, // Use explicit Prisma enum
       },
     });
 
@@ -350,14 +350,14 @@ const handlePaymentCaptured = async (paymentEntity) => {
       id: payment_id,
       amount,
       currency,
-      status,
+      status: razorpayStatus, // Rename to avoid variable shadowing
     } = paymentEntity;
 
     console.log("Processing payment.captured:", {
       orderId: order_id,
       paymentId: payment_id,
       amount,
-      status,
+      status: razorpayStatus, // Use renamed variable
     });
 
     // Find booking by Razorpay order ID
@@ -399,7 +399,7 @@ const handlePaymentCaptured = async (paymentEntity) => {
         razorpaySignature: "", // Not available in webhook
         amount: amount,
         currency: currency,
-        status: "COMPLETED", // Using new TransactionStatus enum
+        status: Prisma.TransactionStatus.COMPLETED, // Use explicit Prisma enum
       },
     });
 
