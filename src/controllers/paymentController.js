@@ -242,7 +242,7 @@ export const verifyPayment = async (req, res, next) => {
 
     // Use raw SQL to bypass any Prisma enum type checking issues
     console.log("=== ATTEMPTING RAW SQL PAYMENT CREATION ===");
-    
+
     const payment = await prisma.$executeRaw`
       INSERT INTO "Payment" (
         "bookingId", 
@@ -260,12 +260,12 @@ export const verifyPayment = async (req, res, next) => {
         ${String(razorpay_signature)},
         ${Number(booking.amount)},
         ${String(booking.currency)},
-        ${'COMPLETED'}::"TransactionStatus",
+        ${"COMPLETED"}::"TransactionStatus",
         ${new Date()}
       )
       RETURNING *
     `;
-    
+
     // Fetch the created payment for response
     const createdPayment = await prisma.payment.findFirst({
       where: { razorpayPaymentId: razorpay_payment_id },
