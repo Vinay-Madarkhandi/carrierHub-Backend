@@ -1,11 +1,26 @@
 import prisma from "../prismaClient.js";
-import { PaymentStatus, BookingStatus } from "@prisma/client";
 import {
   createOrder,
   verifyPayment as verifyPaymentSignature,
   verifyWebhookSignature,
   getRazorpayKeyId,
 } from "../services/razorpayService.js";
+
+// Enum constants to avoid import issues
+const PaymentStatus = {
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  PENDING: 'PENDING',
+  REFUNDED: 'REFUNDED'
+};
+
+const BookingStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING', 
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  COMPLETED: 'COMPLETED'
+};
 
 export const createPaymentOrder = async (req, res, next) => {
   try {
