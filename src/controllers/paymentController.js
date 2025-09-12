@@ -8,18 +8,18 @@ import {
 
 // Enum constants to avoid import issues
 const PaymentStatus = {
-  SUCCESS: 'SUCCESS',
-  FAILED: 'FAILED',
-  PENDING: 'PENDING',
-  REFUNDED: 'REFUNDED'
+  SUCCESS: "SUCCESS",
+  FAILED: "FAILED",
+  PENDING: "PENDING",
+  REFUNDED: "REFUNDED",
 };
 
 const BookingStatus = {
-  PENDING: 'PENDING',
-  PROCESSING: 'PROCESSING', 
-  SUCCESS: 'SUCCESS',
-  FAILED: 'FAILED',
-  COMPLETED: 'COMPLETED'
+  PENDING: "PENDING",
+  PROCESSING: "PROCESSING",
+  SUCCESS: "SUCCESS",
+  FAILED: "FAILED",
+  COMPLETED: "COMPLETED",
 };
 
 export const createPaymentOrder = async (req, res, next) => {
