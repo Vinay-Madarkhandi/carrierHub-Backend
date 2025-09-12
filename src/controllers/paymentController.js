@@ -186,7 +186,7 @@ export const verifyPayment = async (req, res, next) => {
     }
 
     // Verify payment signature using direct crypto validation
-    const sha = crypto.createHmac("sha256", process.env.RAZORPAY_SECRET);
+    const sha = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
     sha.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const digest = sha.digest("hex");
     const isSignatureValid = digest === razorpay_signature;
