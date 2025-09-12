@@ -17,7 +17,6 @@ import bookingRoutes from "./routes/bookings.js";
 import paymentRoutes from "./routes/payments.js";
 import adminRoutes from "./routes/admin.js";
 import categoryRoutes from "./routes/categories.js";
-import diagnosticsRoutes from "./routes/diagnostics.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -58,7 +57,6 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/categories", categoryRoutes);
-app.use("/api/diagnostics", diagnosticsRoutes);
 
 // API documentation endpoint
 app.get("/api/docs", (req, res) => {
