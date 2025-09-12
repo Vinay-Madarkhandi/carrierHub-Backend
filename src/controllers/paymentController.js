@@ -170,10 +170,23 @@ export const verifyPayment = async (req, res, next) => {
     }
 
     // Verify payment signature using direct crypto validation
+    console.log("Debug: Environment check:", {
+      hasRazorpayKeySecret: !!process.env.RAZORPAY_KEY_SECRET,
+      razorpayKeySecretLength: process.env.RAZORPAY_KEY_SECRET?.length || 0,
+    });
+
     const sha = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
     sha.update(`${razorpay_order_id}|${razorpay_payment_id}`);
     const digest = sha.digest("hex");
     const isSignatureValid = digest === razorpay_signature;
+
+    console.log("Debug: Signature validation:", {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      computedDigest: digest,
+      isValid: isSignatureValid,
+    });
 
     if (!isSignatureValid) {
       console.error("Payment signature verification failed:", {
@@ -198,6 +211,16 @@ export const verifyPayment = async (req, res, next) => {
     }
 
     // Create payment record with explicit Prisma enum
+    console.log("Debug: About to create payment with:", {
+      bookingId: booking.id,
+      razorpayPaymentId: razorpay_payment_id,
+      amount: booking.amount,
+      currency: booking.currency,
+      statusToUse: Prisma.PaymentStatus.SUCCESS,
+      prismaPaymentStatusExists: !!Prisma.PaymentStatus,
+      prismaPaymentStatusValues: Object.keys(Prisma.PaymentStatus || {}),
+    });
+
     const payment = await prisma.payment.create({
       data: {
         bookingId: booking.id,
@@ -211,6 +234,14 @@ export const verifyPayment = async (req, res, next) => {
     });
 
     // Update booking status with explicit Prisma enum
+    console.log("Debug: About to update booking status:", {
+      bookingId: booking.id,
+      currentStatus: booking.status,
+      newStatusToUse: Prisma.BookingStatus.SUCCESS,
+      prismaBookingStatusExists: !!Prisma.BookingStatus,
+      prismaBookingStatusValues: Object.keys(Prisma.BookingStatus || {}),
+    });
+
     await prisma.booking.update({
       where: { id: booking.id },
       data: { status: Prisma.BookingStatus.SUCCESS }, // Use Prisma namespace enum
