@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import prisma from "../prismaClient.js";
 import {
   createOrder,
@@ -7,6 +8,7 @@ import {
 } from "../services/razorpayService.js";
 
 // Enum constants to avoid import issues
+// These must match exactly with the Prisma schema enum values
 const PaymentStatus = {
   SUCCESS: "SUCCESS",
   FAILED: "FAILED",
@@ -183,24 +185,25 @@ export const verifyPayment = async (req, res, next) => {
       });
     }
 
-    // Verify payment signature
-    const isSignatureValid = verifyPaymentSignature(
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature
-    );
+    // Verify payment signature using direct crypto validation
+    const sha = crypto.createHmac("sha256", process.env.RAZORPAY_SECRET);
+    sha.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+    const digest = sha.digest("hex");
+    const isSignatureValid = digest === razorpay_signature;
 
     if (!isSignatureValid) {
       console.error("Payment signature verification failed:", {
         razorpay_order_id,
         razorpay_payment_id,
         bookingId,
+        expected: digest,
+        received: razorpay_signature,
       });
 
-      // Mark booking as failed
+      // Mark booking as failed with explicit type casting
       await prisma.booking.update({
         where: { id: booking.id },
-        data: { status: BookingStatus.FAILED },
+        data: { status: "FAILED" }, // Explicitly use string value for BookingStatus
       });
 
       return res.status(400).json({
@@ -210,7 +213,7 @@ export const verifyPayment = async (req, res, next) => {
       });
     }
 
-    // Create payment record
+    // Create payment record with explicit type casting
     const payment = await prisma.payment.create({
       data: {
         bookingId: booking.id,
@@ -219,14 +222,14 @@ export const verifyPayment = async (req, res, next) => {
         razorpaySignature: razorpay_signature,
         amount: booking.amount,
         currency: booking.currency,
-        status: PaymentStatus.SUCCESS,
+        status: "SUCCESS", // Explicitly use string value for PaymentStatus
       },
     });
 
-    // Update booking status
+    // Update booking status with explicit type casting
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { status: BookingStatus.SUCCESS },
+      data: { status: "SUCCESS" }, // Explicitly use string value for BookingStatus
     });
 
     console.log("Payment verified successfully:", {
@@ -385,14 +388,14 @@ const handlePaymentCaptured = async (paymentEntity) => {
         razorpaySignature: "", // Not available in webhook
         amount: amount,
         currency: currency,
-        status: PaymentStatus.SUCCESS,
+        status: "SUCCESS", // Explicitly use string value for PaymentStatus
       },
     });
 
-    // Update booking status
+    // Update booking status with explicit type casting
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { status: BookingStatus.SUCCESS },
+      data: { status: "SUCCESS" }, // Explicitly use string value for BookingStatus
     });
 
     console.log(`Payment captured successfully for booking ${booking.id}`);
@@ -429,7 +432,7 @@ const handlePaymentFailed = async (paymentEntity) => {
     // Update booking status to failed (idempotent operation)
     await prisma.booking.update({
       where: { id: booking.id },
-      data: { status: BookingStatus.FAILED },
+      data: { status: "FAILED" }, // Explicitly use string value for BookingStatus
     });
 
     console.log(`Payment failed for booking ${booking.id}`);
@@ -515,7 +518,7 @@ const handleRefundProcessed = async (refundEntity) => {
     // Update booking status to failed
     await prisma.booking.update({
       where: { id: payment.bookingId },
-      data: { status: BookingStatus.FAILED },
+      data: { status: "FAILED" }, // Explicitly use string value for BookingStatus
     });
 
     console.log(
