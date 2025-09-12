@@ -20,64 +20,64 @@ enum ConsultantType {
 }
 
 enum BookingStatus {
-  PENDING       // created but payment not confirmed
-  PROCESSING    // admin is processing the booking
-  SUCCESS       // payment captured & booking paid
-  FAILED        // payment failed
-  COMPLETED     // counselling/consultant delivered & marked complete
+  PENDING // created but payment not confirmed
+  PROCESSING // admin is processing the booking
+  SUCCESS // payment captured & booking paid
+  FAILED // payment failed
+  COMPLETED // counselling/consultant delivered & marked complete
 }
 
-enum PaymentStatus {
-  SUCCESS       // payment successful
-  FAILED        // payment failed
-  PENDING       // payment pending
-  REFUNDED      // payment refunded
+enum TransactionStatus {
+  COMPLETED // transaction successful
+  REJECTED // transaction failed
+  PROCESSING // transaction pending
+  REFUNDED // transaction refunded
 }
 
 model Student {
-  id          Int       @id @default(autoincrement())
-  name        String
-  email       String    @unique
-  phone       String
-  password    String
-  bookings    Booking[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  phone     String
+  password  String
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Admin {
-  id          Int       @id @default(autoincrement())
-  name        String?
-  email       String    @unique
-  password    String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String?
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Booking {
-  id               Int             @id @default(autoincrement())
-  student          Student         @relation(fields: [studentId], references: [id])
-  studentId        Int
-  consultantType   ConsultantType
-  details          String
-  amount           Int             // amount in paise (e.g., ₹500 = 50000)
-  currency         String          @default("INR")
-  status           BookingStatus   @default(PENDING)
-  razorpayOrderId  String?         // store razorpay order id once created
-  payment          Payment?
-  createdAt        DateTime        @default(now())
-  updatedAt        DateTime        @updatedAt
+  id              Int            @id @default(autoincrement())
+  student         Student        @relation(fields: [studentId], references: [id])
+  studentId       Int
+  consultantType  ConsultantType
+  details         String
+  amount          Int // amount in paise (e.g., ₹500 = 50000)
+  currency        String         @default("INR")
+  status          BookingStatus  @default(PENDING)
+  razorpayOrderId String? // store razorpay order id once created
+  payment         Payment?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model Payment {
-  id                 Int           @id @default(autoincrement())
-  booking            Booking       @relation(fields: [bookingId], references: [id])
-  bookingId          Int           @unique
-  razorpayPaymentId  String        @unique
-  razorpayOrderId    String
-  razorpaySignature  String
-  amount             Int
-  currency           String        @default("INR")
-  status             PaymentStatus
-  createdAt          DateTime      @default(now())
+  id                Int               @id @default(autoincrement())
+  booking           Booking           @relation(fields: [bookingId], references: [id])
+  bookingId         Int               @unique
+  razorpayPaymentId String            @unique
+  razorpayOrderId   String
+  razorpaySignature String
+  amount            Int
+  currency          String            @default("INR")
+  status            TransactionStatus
+  createdAt         DateTime          @default(now())
 }

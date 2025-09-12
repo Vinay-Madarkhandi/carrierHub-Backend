@@ -227,14 +227,8 @@ export const verifyPayment = async (req, res, next) => {
         razorpaySignature: razorpay_signature,
         amount: booking.amount,
         currency: booking.currency,
-        status: "REFUNDED", // Use REFUNDED (unique to PaymentStatus) to establish enum type
+        status: "COMPLETED", // Using new TransactionStatus enum - no conflicts!
       },
-    });
-
-    // Now update to SUCCESS - PostgreSQL knows this is PaymentStatus context
-    const finalPayment = await prisma.payment.update({
-      where: { id: payment.id },
-      data: { status: "SUCCESS" }, // Now this is clearly PaymentStatus.SUCCESS
     });
 
     // Update booking status using string values (reliable approach)
@@ -250,7 +244,7 @@ export const verifyPayment = async (req, res, next) => {
     });
 
     console.log("Payment verified successfully:", {
-      paymentId: finalPayment.id,
+      paymentId: payment.id,
       bookingId: booking.id,
       amount: booking.amount,
     });
@@ -258,7 +252,7 @@ export const verifyPayment = async (req, res, next) => {
     res.json({
       success: true,
       message: "Payment verified successfully",
-      data: { payment: finalPayment },
+      data: { payment },
     });
   } catch (error) {
     console.error("Payment verification error:", error);
@@ -405,7 +399,7 @@ const handlePaymentCaptured = async (paymentEntity) => {
         razorpaySignature: "", // Not available in webhook
         amount: amount,
         currency: currency,
-        status: "SUCCESS", // Direct string value - always works
+        status: "COMPLETED", // Using new TransactionStatus enum
       },
     });
 
