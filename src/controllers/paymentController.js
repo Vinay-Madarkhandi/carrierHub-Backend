@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import prisma from "../prismaClient.js";
-import { PaymentStatus, BookingStatus } from "@prisma/client";
+import pkg from "@prisma/client";
+const { PaymentStatus, BookingStatus } = pkg;
 import {
   createOrder,
   verifyPayment as verifyPaymentSignature,
