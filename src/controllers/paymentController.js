@@ -216,8 +216,11 @@ export const verifyPayment = async (req, res, next) => {
       razorpayPaymentId: razorpay_payment_id,
       amount: booking.amount,
       currency: booking.currency,
-      statusToUse: "SUCCESS",
+      statusToUse: "COMPLETED",
     });
+
+    // Use completely isolated variable to avoid any contamination
+    const transactionStatus = "COMPLETED"; // Explicit TransactionStatus enum value
 
     const payment = await prisma.payment.create({
       data: {
@@ -227,7 +230,7 @@ export const verifyPayment = async (req, res, next) => {
         razorpaySignature: razorpay_signature,
         amount: booking.amount,
         currency: booking.currency,
-        status: "COMPLETED", // Use string value - always works
+        status: transactionStatus, // Use isolated variable
       },
     });
 
