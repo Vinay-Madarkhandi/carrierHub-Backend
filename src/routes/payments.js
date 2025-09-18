@@ -156,13 +156,26 @@ router.get("/web-payment", async (req, res) => {
             <p><strong>Booking ID:</strong> ${bookingId}</p>
             <p><strong>Name:</strong> ${booking.student.name}</p>
           </div>
-          <button class="btn" onclick="startPayment()">Pay Now</button>
+          <button class="btn" id="pay-btn" onclick="startPayment()">Pay Now</button>
           <br><br>
           <a href="carrierhub://dashboard">Return to App</a>
         </div>
 
         <script>
           function startPayment() {
+            console.log('Pay Now button clicked');
+            
+            // Check if Razorpay is loaded
+            if (typeof Razorpay === 'undefined') {
+              alert('Razorpay not loaded. Please refresh the page and try again.');
+              return;
+            }
+            
+            // Check environment variables
+            console.log('Razorpay Key:', "${process.env.RAZORPAY_KEY_ID}");
+            console.log('Amount:', ${booking.amount});
+            console.log('Order ID:', "${orderId}");
+            
             var options = {
               "key": "${process.env.RAZORPAY_KEY_ID}",
               "amount": ${booking.amount},
@@ -175,23 +188,46 @@ router.get("/web-payment", async (req, res) => {
                 "email": "${booking.student.email}"
               },
               "handler": function (response) {
+                console.log('Payment successful:', response);
                 // Payment success - redirect back to app
                 window.location.href = "carrierhub://payment-success?paymentId=" + response.razorpay_payment_id + "&orderId=" + response.razorpay_order_id + "&signature=" + response.razorpay_signature + "&bookingId=${bookingId}";
               },
               "modal": {
                 "ondismiss": function() {
+                  console.log('Payment cancelled by user');
                   // Payment cancelled - redirect back to app
                   window.location.href = "carrierhub://payment-cancelled";
                 }
               }
             };
             
-            var rzp = new Razorpay(options);
-            rzp.open();
+            console.log('Creating Razorpay instance with options:', options);
+            
+            try {
+              var rzp = new Razorpay(options);
+              console.log('Razorpay instance created, opening payment modal...');
+              rzp.open();
+            } catch (error) {
+              console.error('Error creating/opening Razorpay:', error);
+              alert('Error opening payment: ' + error.message);
+            }
           }
 
-          // Auto-start payment
-          setTimeout(startPayment, 1000);
+          // Remove auto-start and add page load check
+          window.onload = function() {
+            console.log('Page loaded');
+            console.log('Razorpay available:', typeof Razorpay !== 'undefined');
+            if (typeof Razorpay === 'undefined') {
+              document.getElementById('pay-btn').innerHTML = 'Loading payment system...';
+              setTimeout(function() {
+                if (typeof Razorpay === 'undefined') {
+                  document.getElementById('pay-btn').innerHTML = 'Payment system failed to load - Refresh page';
+                } else {
+                  document.getElementById('pay-btn').innerHTML = 'Pay Now';
+                }
+              }, 3000);
+            }
+          };
         </script>
       </body>
       </html>
