@@ -141,91 +141,301 @@ router.get("/web-payment", async (req, res) => {
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
-          body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
-          .container { max-width: 400px; margin: 0 auto; }
-          .btn { background: #1976d2; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-          .btn:hover { background: #1565c0; }
-          .info { background: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 4px; }
+          body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .container { 
+            max-width: 400px; 
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 32px;
+            text-align: center;
+          }
+          .logo {
+            width: 60px;
+            height: 60px;
+            background: #2563eb;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+          }
+          h2 {
+            color: #1f2937;
+            margin: 0 0 8px 0;
+            font-size: 24px;
+            font-weight: 700;
+          }
+          .subtitle {
+            color: #6b7280;
+            margin-bottom: 32px;
+            font-size: 14px;
+          }
+          .info { 
+            background: #f8fafc; 
+            padding: 20px; 
+            margin: 24px 0; 
+            border-radius: 12px;
+            border-left: 4px solid #2563eb;
+          }
+          .info p {
+            margin: 12px 0;
+            font-size: 16px;
+            color: #374151;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .info strong {
+            color: #1f2937;
+          }
+          .btn { 
+            background: #2563eb; 
+            color: white; 
+            padding: 16px 32px; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s ease;
+            margin: 24px 0;
+            position: relative;
+            overflow: hidden;
+          }
+          .btn:hover { 
+            background: #1d4ed8; 
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.25);
+          }
+          .btn:active {
+            transform: translateY(0);
+          }
+          .btn:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+          }
+          .loading {
+            display: none;
+            color: #6b7280;
+            font-style: italic;
+            margin: 16px 0;
+            font-size: 14px;
+          }
+          .error {
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            display: none;
+            border: 1px solid #fecaca;
+          }
+          .return-link {
+            display: inline-block;
+            margin-top: 24px;
+            color: #2563eb;
+            text-decoration: none;
+            padding: 12px 24px;
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+          }
+          .return-link:hover {
+            background: #2563eb;
+            color: white;
+            transform: translateY(-1px);
+          }
+          .secure-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+            font-size: 12px;
+            color: #6b7280;
+          }
+          .secure-badge::before {
+            content: "🔒";
+            margin-right: 6px;
+          }
         </style>
       </head>
       <body>
         <div class="container">
-          <h2>CarrierHub Payment</h2>
+          <div class="logo">CH</div>
+          <h2>Secure Payment</h2>
+          <p class="subtitle">Complete your consultation booking</p>
+          
           <div class="info">
-            <p><strong>Amount:</strong> ₹${booking.amount / 100}</p>
-            <p><strong>Booking ID:</strong> ${bookingId}</p>
-            <p><strong>Name:</strong> ${booking.student.name}</p>
+            <p><strong>Amount:</strong> <span>₹${
+              booking.amount / 100
+            }</span></p>
+            <p><strong>Booking ID:</strong> <span>#${bookingId}</span></p>
+            <p><strong>Name:</strong> <span>${booking.student.name}</span></p>
+            <p><strong>Email:</strong> <span>${booking.student.email}</span></p>
           </div>
-          <button class="btn" id="pay-btn" onclick="startPayment()">Pay Now</button>
-          <br><br>
-          <a href="carrierhub://dashboard">Return to App</a>
+
+          <div class="error" id="error-message"></div>
+          <div class="loading" id="loading">Initializing secure payment...</div>
+          
+          <button class="btn" id="pay-btn" onclick="startPayment()">
+            🔒 Pay ₹${booking.amount / 100} Securely
+          </button>
+          
+          <div class="secure-badge">
+            Secured by Razorpay
+          </div>
+          
+          <a href="carrierhub://dashboard" class="return-link">← Return to App</a>
         </div>
 
         <script>
-          function startPayment() {
-            console.log('Pay Now button clicked');
+          let paymentInProgress = false;
+          
+          function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
             
-            // Check if Razorpay is loaded
-            if (typeof Razorpay === 'undefined') {
-              alert('Razorpay not loaded. Please refresh the page and try again.');
+            const btn = document.getElementById('pay-btn');
+            btn.disabled = false;
+            btn.innerHTML = '🔒 Pay ₹${booking.amount / 100} Securely';
+            
+            const loading = document.getElementById('loading');
+            loading.style.display = 'none';
+            
+            paymentInProgress = false;
+          }
+          
+          function startPayment() {
+            if (paymentInProgress) {
+              console.log('Payment already in progress');
               return;
             }
             
-            // Check environment variables
-            console.log('Razorpay Key:', "${process.env.RAZORPAY_KEY_ID}");
-            console.log('Amount:', ${booking.amount});
-            console.log('Order ID:', "${orderId}");
+            console.log('=== Starting Payment Process ===');
             
-            var options = {
-              "key": "${process.env.RAZORPAY_KEY_ID}",
-              "amount": ${booking.amount},
-              "currency": "INR",
-              "name": "CarrierHub",
-              "description": "Consultation Booking Payment",
-              "order_id": "${orderId}",
-              "prefill": {
-                "name": "${booking.student.name}",
-                "email": "${booking.student.email}"
+            // Hide any previous errors
+            document.getElementById('error-message').style.display = 'none';
+            
+            // Show loading
+            const btn = document.getElementById('pay-btn');
+            const loading = document.getElementById('loading');
+            btn.disabled = true;
+            btn.innerHTML = 'Processing...';
+            loading.style.display = 'block';
+            paymentInProgress = true;
+            
+            // Check if Razorpay is loaded (same as frontend)
+            if (typeof window.Razorpay === 'undefined') {
+              console.error('Razorpay not loaded');
+              showError('Payment system not loaded. Please refresh and try again.');
+              return;
+            }
+            
+            // Check if key is available
+            const razorpayKey = "${process.env.RAZORPAY_KEY_ID}";
+            console.log('Razorpay Key:', razorpayKey ? 'Available' : 'Missing');
+            
+            if (!razorpayKey || razorpayKey.includes('undefined')) {
+              console.error('Razorpay key missing');
+              showError('Payment configuration error. Please contact support.');
+              return;
+            }
+            
+            // Create options exactly like frontend
+            const options = {
+              key: razorpayKey,
+              amount: ${booking.amount},
+              currency: "INR",
+              name: "CarrierHub",
+              description: "Consultation Booking Payment",
+              order_id: "${orderId}",
+              prefill: {
+                name: "${booking.student.name}",
+                email: "${booking.student.email}",
+                contact: ""
               },
-              "handler": function (response) {
+              theme: {
+                color: "#2563eb"
+              },
+              handler: function (response) {
                 console.log('Payment successful:', response);
-                // Payment success - redirect back to app
+                // Redirect back to app with success parameters
                 window.location.href = "carrierhub://payment-success?paymentId=" + response.razorpay_payment_id + "&orderId=" + response.razorpay_order_id + "&signature=" + response.razorpay_signature + "&bookingId=${bookingId}";
               },
-              "modal": {
-                "ondismiss": function() {
-                  console.log('Payment cancelled by user');
-                  // Payment cancelled - redirect back to app
-                  window.location.href = "carrierhub://payment-cancelled";
-                }
-              }
+              modal: {
+                ondismiss: function() {
+                  console.log('Payment dismissed by user');
+                  paymentInProgress = false;
+                  btn.disabled = false;
+                  btn.innerHTML = '🔒 Pay ₹${booking.amount / 100} Securely';
+                  loading.style.display = 'none';
+                },
+                confirm_close: true,
+                escape: true,
+                backdropclose: false
+              },
+              retry: {
+                enabled: true,
+                max_count: 3
+              },
+              timeout: 300
             };
             
-            console.log('Creating Razorpay instance with options:', options);
+            console.log('Creating Razorpay instance with options:', {
+              ...options,
+              handler: '[Function]'
+            });
             
             try {
-              var rzp = new Razorpay(options);
-              console.log('Razorpay instance created, opening payment modal...');
+              // Hide loading before opening (like frontend)
+              loading.style.display = 'none';
+              
+              // Create and open Razorpay (exactly like frontend)
+              const rzp = new window.Razorpay(options);
+              
+              rzp.on('payment.failed', function (response) {
+                console.error('Payment failed:', response);
+                paymentInProgress = false;
+                showError('Payment failed: ' + (response.error?.description || 'Unknown error'));
+              });
+              
+              console.log('Opening Razorpay payment modal...');
               rzp.open();
+              
             } catch (error) {
               console.error('Error creating/opening Razorpay:', error);
-              alert('Error opening payment: ' + error.message);
+              showError('Error starting payment: ' + error.message);
             }
           }
-
-          // Remove auto-start and add page load check
+          
+          // Page load check (like frontend)
           window.onload = function() {
-            console.log('Page loaded');
-            console.log('Razorpay available:', typeof Razorpay !== 'undefined');
-            if (typeof Razorpay === 'undefined') {
-              document.getElementById('pay-btn').innerHTML = 'Loading payment system...';
-              setTimeout(function() {
-                if (typeof Razorpay === 'undefined') {
-                  document.getElementById('pay-btn').innerHTML = 'Payment system failed to load - Refresh page';
-                } else {
-                  document.getElementById('pay-btn').innerHTML = 'Pay Now';
-                }
-              }, 3000);
+            console.log('=== Payment Page Loaded ===');
+            console.log('Razorpay available:', typeof window.Razorpay !== 'undefined');
+            console.log('Environment key available:', "${
+              process.env.RAZORPAY_KEY_ID
+            }" ? 'Yes' : 'No');
+            
+            if (typeof window.Razorpay === 'undefined') {
+              showError('Payment system failed to load. Please refresh the page.');
             }
           };
         </script>
